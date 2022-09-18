@@ -2,35 +2,53 @@ const path = require("path");
 const HtmlPlugin = require("html-webpack-plugin");
 
 module.exports = {
-	entry: path.resolve(__dirname, "src/main.ts"),
+	entry: path.resolve(__dirname, "./src/index.tsx"),
 	mode: "development",
 	module: {
 		rules: [
 			{
-				test: /\.ts$/,
+				test: /\.tsx?$/,
 				use: "ts-loader",
 			},
 			{
-				test: /\.scss$/,
+				test: /\.s?css$/,
 				use: [
 					"style-loader",
 					"css-loader",
 					"sass-loader",
 				],
 			},
-		],
+			{
+				test: /\.md$/,
+				use: [
+					{
+						loader: "babel-loader",
+						options: {
+							presets: [ "@babel/preset-react" ],
+						},
+					},
+					"markdown-to-react-loader",
+				],
+			},
+		]
 	},
 	resolve: {
-		extensions: [ ".ts", ".js" ],
+		extensions: [ ".ts", ".js", ".tsx", ".jsx" ],
 	},
 	plugins: [
 		new HtmlPlugin({
 			template: path.resolve(__dirname, "index.html"),
-			title: "EDA387",
+			title: "EDA378",
+			base: "/",
 		}),
 	],
+	ignoreWarnings: [
+		{
+			module: /styles\/index\.scss$/i,
+		},
+	],
 	output: {
-		filename: "main.js",
+		filename: "index.js",
 		path: path.resolve(__dirname, "dist"),
 	},
 	devServer: {
