@@ -86,7 +86,7 @@ export class DijkstrasAlgorithm extends Component<DijkstrasAlgorithmProperties, 
 						<table>
 							<tr>
 								<th>Rounds:</th>
-								<td>{this.state.rounds}</td>
+								<td className="numeric">{this.state.rounds}</td>
 							</tr>
 							<tr>
 								<th>Status:</th>
