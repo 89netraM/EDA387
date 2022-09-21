@@ -39,7 +39,7 @@ module.exports = {
 		new HtmlPlugin({
 			template: path.resolve(__dirname, "index.html"),
 			title: "EDA378",
-			base: "/",
+			base: process.env["BASE_URL"] ?? "/",
 		}),
 	],
 	ignoreWarnings: [

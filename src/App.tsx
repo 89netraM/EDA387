@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./Layout";
 import { DijkstrasAlgorithm } from "./pages/DijkstrasAlgorithm";
 import { MaximumMatchingRingPage } from "./pages/MaximumMatchingRingPage";
@@ -15,7 +15,7 @@ export const PAGES = [
 
 export function App(): JSX.Element {
 	return (
-		<BrowserRouter>
+		<HashRouter>
 			<Routes>
 				<Route path="/" element={<Layout />}>
 					<Route index element={<section><README /></section>} />
@@ -26,6 +26,6 @@ export function App(): JSX.Element {
 					<Route path="*" element={<section><NotFound /></section>} />
 				</Route>
 			</Routes>
-		</BrowserRouter>
+		</HashRouter>
 	);
 }
