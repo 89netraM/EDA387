@@ -1,10 +1,8 @@
 import { sleep, waitForClick } from "../utils/promise";
 import { randomColor, randomIndex } from "../utils/colors";
+import { CanvasBased } from "./CanvasBased";
 
-export class Dijkstras {
-	private readonly canvas: HTMLCanvasElement;
-	private readonly ctx: CanvasRenderingContext2D;
-
+export class Dijkstras extends CanvasBased {
 	public count: number = 8;
 	public delay: (signal: AbortSignal) => Promise<void>;
 	public drawTime: number = 1000;
@@ -35,13 +33,9 @@ export class Dijkstras {
 	public onIterationComplete: (isSafe: boolean) => void;
 
 	public constructor(canvas: HTMLCanvasElement) {
-		this.canvas = canvas;
-		this.ctx = this.canvas.getContext("2d");
-		this.delay = s => waitForClick(this.canvas, s);
+		super(canvas);
 
-		this.onResize = this.onResize.bind(this);
-		window.addEventListener("resize", this.onResize, true);
-		this.onResize();
+		this.delay = s => waitForClick(this.canvas, s);
 
 		this.start();
 	}
@@ -56,12 +50,6 @@ export class Dijkstras {
 	public restart(): void {
 		this.stop();
 		this.start();
-	}
-
-	private onResize(): void {
-		this.canvas.width = this.canvas.offsetWidth;
-		this.canvas.height = this.canvas.offsetHeight;
-		this.drawProcessors(this.processors, this.processors.length);
 	}
 
 	private async program(signal: AbortSignal): Promise<void> {
@@ -109,6 +97,11 @@ export class Dijkstras {
 			}
 		}
 	}
+	protected reDraw(): void {
+		if (this.processors != null) {
+			this.drawProcessors(this.processors, this.processors.length);
+		}
+	}
 	private drawProcessors(processors: ReadonlyArray<Processor>, count: number): void {
 		const center = [this.canvas.width / 2, this.canvas.height / 2];
 		const radius = Math.min(this.canvas.width, this.canvas.height) * this.circleRadius;
@@ -124,8 +117,8 @@ export class Dijkstras {
 			}
 		}
 	}
-	private clear() {
-		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+	protected clear() {
+		super.clear();
 
 		const center = [this.canvas.width / 2, this.canvas.height / 2];
 		const radius = Math.min(this.canvas.width, this.canvas.height) * this.circleRadius;
@@ -150,8 +143,8 @@ export class Dijkstras {
 	}
 
 	public dispose(): void {
+		super.dispose();
 		this.stop();
-		window.removeEventListener("resize", this.onResize);
 	}
 }
 

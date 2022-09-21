@@ -1,22 +1,22 @@
-import React, { createRef, ChangeEvent, Component, ReactNode, RefObject } from "react";
+import React, { createRef, Component, ReactNode, RefObject, ChangeEvent } from "react";
 import { sleep, waitForClick } from "../utils/promise";
-import { Dijkstras } from "../interactives/Dijkstras";
+import { MaximumMatchingRing } from "../interactives/MaximumMatchingRing";
 
-export interface DijkstrasAlgorithmProperties {
+export interface MaximumMatchingRingPageProperties {
 }
 
-interface DijkstrasAlgorithmState {
+interface MaximumMatchingRingPageState {
 	autoContinue: boolean;
 	count: string;
 	rounds: number;
 	isSafe: boolean;
 }
 
-export class DijkstrasAlgorithm extends Component<DijkstrasAlgorithmProperties, DijkstrasAlgorithmState> {
+export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPageProperties, MaximumMatchingRingPageState> {
 	private readonly canvas: RefObject<HTMLCanvasElement> = createRef<HTMLCanvasElement>();
-	private dijkstras: Dijkstras;
+	private maximumMatching: MaximumMatchingRing;
 
-	public constructor(props: DijkstrasAlgorithmProperties) {
+	public constructor(props: MaximumMatchingRingPageProperties) {
 		super(props);
 		this.state = {
 			autoContinue: false,
@@ -32,7 +32,7 @@ export class DijkstrasAlgorithm extends Component<DijkstrasAlgorithmProperties, 
 	}
 
 	private setAutoContinue(e: ChangeEvent<HTMLInputElement>): void {
-		this.dijkstras.delay = e.target.checked ?
+		this.maximumMatching.delay = e.target.checked ?
 			s => sleep(500, s) :
 			s => waitForClick(this.canvas.current, s);
 		if (e.target.checked) {
@@ -46,7 +46,7 @@ export class DijkstrasAlgorithm extends Component<DijkstrasAlgorithmProperties, 
 	private setCount(e: ChangeEvent<HTMLInputElement>): void {
 		const newCount = parseInt(e.target.value);
 		if (Number.isInteger(newCount) || e.target.value == "") {
-			this.dijkstras.count = newCount;
+			this.maximumMatching.count = newCount;
 			this.setState({
 				count: e.target.value,
 			});
@@ -65,23 +65,23 @@ export class DijkstrasAlgorithm extends Component<DijkstrasAlgorithmProperties, 
 			rounds: 0,
 			isSafe: false,
 		});
-		this.dijkstras.restart();
+		this.maximumMatching.restart();
 	}
 
 	public componentDidMount(): void {
-		this.dijkstras = new Dijkstras(this.canvas.current);
-		this.dijkstras.onIterationComplete = this.onIterationComplete;
+		this.maximumMatching = new MaximumMatchingRing(this.canvas.current);
+		this.maximumMatching.onIterationComplete = this.onIterationComplete;
 	}
 
 	public render(): ReactNode {
 		return (
 			<>
 				<div style={{ position: "absolute", right: "1px", bottom: "1px" }}>
-					{this.state.autoContinue ? null : "Tap to continue..."}
+					{this.state.autoContinue || this.maximumMatching?.isSafe ? null : "Tap to continue..."}
 				</div>
 				<canvas ref={this.canvas} />
 				<div className="panel">
-					<h3>Dijkstra's Algorithm</h3>
+					<h3>Self-stabilizing maximum&nbsp;matching on&nbsp;a&nbsp;ring</h3>
 					<p>
 						<table>
 							<tr>
@@ -96,9 +96,37 @@ export class DijkstrasAlgorithm extends Component<DijkstrasAlgorithmProperties, 
 					</p>
 					<hr />
 					<p>
+						<table>
+							<tr title="The processor points at a neighbor that points back at it">
+								<th>Matched:</th>
+								<td style={{ color: MaximumMatchingRing.MatchedColor }}>■</td>
+							</tr>
+							<tr title="The processor points at a neighbor that points at no one">
+								<th>Waiting:</th>
+								<td style={{ color: MaximumMatchingRing.WaitingColor }}>■</td>
+							</tr>
+							<tr title="The processor points at no one, but all its neighbors points at someone">
+								<th>Single:</th>
+								<td style={{ color: MaximumMatchingRing.SingleColor }}>■</td>
+							</tr>
+							<tr title="The processor points at no one, and so does one of its neighbors">
+								<th>Free:</th>
+								<td style={{ color: MaximumMatchingRing.FreeColor }}>■</td>
+							</tr>
+							<tr title="The processor points at a neighbor that does not point at it">
+								<th>Chaining:</th>
+								<td style={{ color: MaximumMatchingRing.ChainingColor }}>■</td>
+							</tr>
+						</table>
+					</p>
+					<hr />
+					<p>
 						<label>
 							Auto Continue: {" "}
-							<input type="checkbox" onChange={this.setAutoContinue} />
+							<input
+								type="checkbox"
+								checked={this.state.autoContinue}
+								onChange={this.setAutoContinue} />
 							<span className="toggle"></span>
 						</label>
 					</p>
@@ -120,6 +148,6 @@ export class DijkstrasAlgorithm extends Component<DijkstrasAlgorithmProperties, 
 	}
 
 	public componentWillUnmount(): void {
-		this.dijkstras.dispose();
+		this.maximumMatching.dispose();
 	}
 }

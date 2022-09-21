@@ -32,5 +32,12 @@ main {
 		hr {
 			margin: 0px (-$distance / 2);
 		}
+
+		table {
+			th {
+				text-align: start;
+				font-weight: normal;
+			}
+		}
 	}
 }

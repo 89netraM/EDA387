@@ -16,3 +16,7 @@ export function hslToHex(h: number, s: number, l: number): string {
 	};
 	return `#${f(0)}${f(8)}${f(4)}`;
 }
+
+export function themeColor(identifier: string): string {
+	return window.getComputedStyle(document.documentElement).getPropertyValue(identifier);
+}
