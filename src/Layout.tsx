@@ -20,7 +20,7 @@ export function Layout(): JSX.Element {
 					{PAGES.map(([name, path]) =>
 						<li
 							key={name}
-							className={location.pathname === path ? "active" : null}
+							className={location.pathname.startsWith(path) ? "active" : null}
 						>
 							<Link to={path}>{name}</Link>
 						</li>

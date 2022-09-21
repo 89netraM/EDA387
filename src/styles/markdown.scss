@@ -14,34 +14,6 @@ section {
 		border-bottom: 1px solid var(--border);
 	}
 
-	p {
-		line-height: 1.5;
-		margin-bottom: 1em;
-	}
-
-	code {
-		@include darkTheme;
-
-		padding: 0.25em 0.5em;
-		border-radius: 0.2em;
-		font-size: 85%;
-		color: var(--color);
-		background-color: var(--background-color);
-	}
-	pre {
-		@include darkTheme;
-
-		padding: ($distance / 2) $distance;
-		border-radius: $rounding;
-		line-height: 1.5;
-		background-color: var(--background-color);
-
-		code {
-			padding: unset;
-			font-size: unset;
-		}
-	}
-
 	&.readme {
 		> h1:first-child, h1, h2, h3, h4, h5, h6 {
 			padding-top: calc(#{$headerSize} + #{$distance});
@@ -63,5 +35,35 @@ section {
 				}
 			}
 		}
+	}
+}
+
+p {
+	line-height: 1.5;
+	margin-bottom: 1em;
+	margin-right: $distance;
+}
+
+code {
+	@include darkTheme;
+
+	padding: 0.25em 0.5em;
+	border-radius: 0.2em;
+	font-size: 85%;
+	color: var(--color);
+	background-color: var(--background-color);
+}
+pre {
+	@include darkTheme;
+
+	padding: ($distance / 2) $distance;
+	margin-right: $distance;
+	border-radius: $rounding;
+	line-height: 1.5;
+	background-color: var(--background-color);
+
+	code {
+		padding: unset;
+		font-size: unset;
 	}
 }

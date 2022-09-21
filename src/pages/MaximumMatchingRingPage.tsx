@@ -1,6 +1,10 @@
 import React, { createRef, Component, ReactNode, RefObject, ChangeEvent } from "react";
 import { sleep, waitForClick } from "../utils/promise";
 import { MaximumMatchingRing } from "../interactives/MaximumMatchingRing";
+import MaximumMatchingRingDescription from "./MaximumMatchingRingDescription.md";
+import { Route, Routes } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { PAGES } from "../App";
 
 export interface MaximumMatchingRingPageProperties {
 }
@@ -83,6 +87,9 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 				<div className="panel">
 					<h3>Self-stabilizing maximum&nbsp;matching on&nbsp;a&nbsp;ring</h3>
 					<p>
+						<Link to="./description"><button>Description</button></Link>
+					</p>
+					<p>
 						<table>
 							<tr>
 								<th>Rounds:</th>
@@ -143,6 +150,20 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 						<button onClick={this.restart}>Restart</button>
 					</p>
 				</div>
+				<Routes>
+					<Route path="description" element={
+						<div
+							className="dialog"
+							data-open={true}>
+							<main>
+								<MaximumMatchingRingDescription />
+							</main>
+							<footer>
+								<Link to="../."><button>Close</button></Link>
+							</footer>
+						</div>
+					} />
+				</Routes>
 			</>
 		);
 	}

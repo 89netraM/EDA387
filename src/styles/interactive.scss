@@ -45,3 +45,23 @@ main {
 		}
 	}
 }
+
+@media screen and (min-width: $bigScreen) {
+	.dialog {
+		max-width: $bigScreen;
+		max-height: calc(100vh - $headerSize * 2);
+
+		display: flex !important;
+		flex-direction: column;
+
+		main {
+			min-height: unset;
+			overflow: auto;
+			display: block;
+		}
+
+		footer {
+			padding-top: $distance;
+		}
+	}
+}
