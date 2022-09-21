@@ -117,10 +117,10 @@ export class Dijkstras {
 			const angle = Math.PI * 2 * (i / processors.length) - Math.PI / 2;
 			const pos: [number, number] = [center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle)];
 			if (i < count) {
-				this.drawProcessor(pos, randomColor(processors[i].index, processors.length + 1));
+				this.drawProcessor(pos, processors[i].index, processors.length + 1);
 			}
 			else if (processors[i].previousIndex != null) {
-				this.drawProcessor(pos, randomColor(processors[i].previousIndex, processors.length + 1));
+				this.drawProcessor(pos, processors[i].previousIndex, processors.length + 1);
 			}
 		}
 	}
@@ -134,13 +134,19 @@ export class Dijkstras {
 		this.ctx.font = `${this.processorRadius * 2}px sans-serif`;
 		this.ctx.fillText("👑", center[0], center[1] - radius - this.processorRadius);
 	}
-	private drawProcessor(pos: [number, number], color: string): void {
+	private drawProcessor(pos: [number, number], index: number, processorCount: number): void {
 		const radius = this.processorRadius;
 		this.ctx.beginPath();
-		this.ctx.fillStyle = color;
+		this.ctx.fillStyle = randomColor(index, processorCount);
 		this.ctx.ellipse(pos[0], pos[1], radius, radius, 0, 0, Math.PI * 2);
 		this.ctx.fill();
 		this.ctx.closePath();
+
+		this.ctx.textAlign = "center";
+		this.ctx.textBaseline = "middle";
+		this.ctx.font = `${this.processorRadius * 0.75}px monospace`;
+		this.ctx.fillStyle = "#ffffff";
+		this.ctx.fillText(index.toString(), pos[0], pos[1]);
 	}
 
 	public dispose(): void {
