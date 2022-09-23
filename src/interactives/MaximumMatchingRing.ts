@@ -19,11 +19,12 @@ export class MaximumMatchingRing extends CanvasBased {
 	public static SingleColor: string = "#d95555";
 	public static ChainingColor: string = "#5559d9";
 
+	private rounds: number;
 	private previous: ReadonlyArray<Processor>;
 	private processors: ReadonlyArray<Processor>;
 
 	private abortController: AbortController;
-	public onIterationComplete: (isSafe: boolean) => void;
+	public onIterationComplete: (rounds: number, isSafe: boolean, vfValues: VfValues) => void;
 
 	public get isSafe(): boolean {
 		if (this.processors?.length > 0) {
@@ -58,21 +59,50 @@ export class MaximumMatchingRing extends CanvasBased {
 	}
 
 	private async program(signal: AbortSignal): Promise<void> {
+		this.rounds = 0;
 		this.previous = new Array<Processor>();
 		this.processors = this.createProcessors(this.count);
 		await this.allDrawProcessors(this.previous, this.processors, this.drawTime, signal);
 
 		while (!signal.aborted && !this.isSafe) {
+			this.signalIterationComplete();
 			await this.delay(signal);
 			if (!signal.aborted) {
 				this.previous = this.processors;
 				this.processors = this.stepProcessors(this.processors);
 				await this.allDrawProcessors(this.previous, this.processors, this.drawTime, signal);
-				if (!signal.aborted) {
-					this.onIterationComplete?.(this.isSafe);
-				}
+			}
+			if (!signal.aborted) {
+				this.rounds++;
 			}
 		}
+		if (!signal.aborted) {
+			this.signalIterationComplete();
+		}
+	}
+
+	private signalIterationComplete(): void {
+		const vfValues = { m: 0, s: 0, w: 0, f: 0, c: 0 };
+		for (let i = 0; i < this.processors.length; i++) {
+			switch (this.colorOf(this.processors, i)) {
+				case MaximumMatchingRing.MatchedColor:
+					vfValues.m++;
+					break;
+				case MaximumMatchingRing.WaitingColor:
+					vfValues.w++;
+					break;
+				case MaximumMatchingRing.FreeColor:
+					vfValues.f++;
+					break;
+				case MaximumMatchingRing.SingleColor:
+					vfValues.s++;
+					break;
+				case MaximumMatchingRing.ChainingColor:
+					vfValues.c++;
+					break;
+			}
+		}
+		this.onIterationComplete?.(this.rounds, this.isSafe, vfValues);
 	}
 
 	private createProcessors(count: number): Array<Processor> {
@@ -261,6 +291,14 @@ abstract class Processor {
 		return this.connection === other.connection &&
 			this.state === other.state;
 	}
+}
+
+export interface VfValues {
+	m: number;
+	s: number;
+	w: number;
+	f: number;
+	c: number;
 }
 
 class Master extends Processor {

@@ -1,10 +1,9 @@
 import React, { createRef, Component, ReactNode, RefObject, ChangeEvent } from "react";
 import { sleep, waitForClick } from "../utils/promise";
-import { MaximumMatchingRing } from "../interactives/MaximumMatchingRing";
+import { MaximumMatchingRing, VfValues } from "../interactives/MaximumMatchingRing";
 import MaximumMatchingRingDescription from "./MaximumMatchingRingDescription.md";
 import { Route, Routes } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { PAGES } from "../App";
 
 export interface MaximumMatchingRingPageProperties {
 }
@@ -14,6 +13,7 @@ interface MaximumMatchingRingPageState {
 	count: string;
 	rounds: number;
 	isSafe: boolean;
+	vfValues?: VfValues;
 }
 
 export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPageProperties, MaximumMatchingRingPageState> {
@@ -57,10 +57,11 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 		}
 	}
 
-	private onIterationComplete(isSafe: boolean): void {
+	private onIterationComplete(rounds: number, isSafe: boolean, vfValues: VfValues): void {
 		this.setState(s => ({
-			rounds: s.rounds + 1,
+			rounds,
 			isSafe,
+			vfValues,
 		}));
 	}
 
@@ -68,6 +69,7 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 		this.setState({
 			rounds: 0,
 			isSafe: false,
+			vfValues: { m: 0, s: 0, w: 0, f: 0, c: 0 },
 		});
 		this.maximumMatching.restart();
 	}
@@ -78,6 +80,9 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 	}
 
 	public render(): ReactNode {
+		const v = this.state.vfValues ?? { m: 0, s: 0, w: 0, f: 0, c: 0 };
+		const vf = `(${v.m + v.s}, ${v.w}, ${v.f}, ${v.c})`;
+
 		return (
 			<>
 				<div style={{ position: "absolute", right: "1px", bottom: "1px" }}>
@@ -98,6 +103,10 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 							<tr>
 								<th>Status:</th>
 								<td>{this.state.isSafe ? "Safe" : "Unsafe"}</td>
+							</tr>
+							<tr title="VF = (m + s, w, f, c)">
+								<th>VF:</th>
+								<td>{vf}</td>
 							</tr>
 						</table>
 					</p>
