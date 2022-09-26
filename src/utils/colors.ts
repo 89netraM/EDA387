@@ -18,5 +18,12 @@ export function hslToHex(h: number, s: number, l: number): string {
 }
 
 export function themeColor(identifier: string): string {
-	return window.getComputedStyle(document.documentElement).getPropertyValue(identifier);
+	return window.getComputedStyle(document.documentElement).getPropertyValue(identifier).trim();
+}
+
+export function opacity(hex: string, opacity: number): string {
+	const r = Number.parseInt(hex.substring(1, 3), 16);
+	const g = Number.parseInt(hex.substring(3, 5), 16);
+	const b = Number.parseInt(hex.substring(5, 7), 16);
+	return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 }

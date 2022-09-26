@@ -17,3 +17,7 @@ export function waitForClick(element: HTMLElement, signal?: AbortSignal): Promis
 		element.addEventListener("click", react, true);
 	});
 }
+
+export function immediate(signal?: AbortSignal): Promise<void> {
+	return sleep(0, signal);
+}
