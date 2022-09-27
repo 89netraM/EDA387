@@ -1,7 +1,3 @@
-export function randomIndex(max: number): number {
-	return Math.floor(Math.random() * max);
-}
-
 export function randomColor(colorIndex: number, colorCount: number): string {
 	const colorStep = 360 / colorCount;
 	return hslToHex(colorIndex * colorStep, 0.63, 0.59);

@@ -1,6 +1,6 @@
 import React, { createRef, Component, ReactNode, RefObject, ChangeEvent } from "react";
 import { sleep, waitForClick } from "../utils/promise";
-import { MaximumMatching } from "../interactives/MaximumMatching";
+import { MaximumMatching, MaximumMatchingIteration } from "../interactives/MaximumMatching";
 
 export interface MaximumMatchingPageProperties {
 }
@@ -21,7 +21,7 @@ export class MaximumMatchingPage extends Component<MaximumMatchingPageProperties
 		super(props);
 		this.state = {
 			autoContinue: false,
-			count: "6",
+			count: MaximumMatching.DefaultCount.toString(),
 			round: 0,
 			isSafe: false,
 			loading: 0,
@@ -57,7 +57,7 @@ export class MaximumMatchingPage extends Component<MaximumMatchingPageProperties
 		}
 	}
 
-	private onIterationComplete(isSafe: boolean, round: number): void {
+	private onIterationComplete({ isSafe, round }: MaximumMatchingIteration): void {
 		this.setState({
 			round,
 			isSafe,
@@ -85,7 +85,8 @@ export class MaximumMatchingPage extends Component<MaximumMatchingPageProperties
 			isSafe: false,
 			loading: 0,
 		});
-		this.maximumMatching.restart();
+		this.maximumMatching.stop();
+		this.maximumMatching.start();
 	}
 
 	public componentDidMount(): void {
@@ -98,7 +99,7 @@ export class MaximumMatchingPage extends Component<MaximumMatchingPageProperties
 		return (
 			<>
 				<div style={{ position: "absolute", right: "1px", bottom: "1px" }}>
-					{this.state.loading != null || this.state.autoContinue || this.maximumMatching?.isSafe ? null : "Tap to continue..."}
+					{this.state.loading != null || this.state.autoContinue || this.state.isSafe ? null : "Tap to continue..."}
 				</div>
 				{this.state.loading != null
 					?

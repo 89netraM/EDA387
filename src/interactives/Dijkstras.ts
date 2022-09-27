@@ -1,23 +1,55 @@
-import { sleep, waitForClick } from "../utils/promise";
-import { randomColor, randomIndex } from "../utils/colors";
-import { CanvasBased } from "./CanvasBased";
+import { IEquatable, ProgramBased } from "./ProgramBased";
+import { Vec } from "./GraphBased";
+import { randomColor, themeColor } from "../utils/colors";
 
-export class Dijkstras extends CanvasBased {
-	public count: number = 8;
-	public delay: (signal: AbortSignal) => Promise<void>;
-	public drawTime: number = 1000;
+export interface DijkstrasIteration {
+	round: number;
+	isSafe: boolean;
+}
 
-	public processorRadius: number = 25;
-	public circleRadius: number = 0.25;
+export class Dijkstras extends ProgramBased<Processor, DijkstrasIteration> {
+	public static DefaultCount: number = 8;
 
-	private abortController: AbortController;
-	private processors: ReadonlyArray<Processor> = new Array<Processor>();
+	private static CircleRadius: number = 0.25;
 
-	public get isSafe(): boolean {
-		if (this.processors.length > 0) {
+	public count: number = Dijkstras.DefaultCount;
+
+	private round: number = 0;
+
+	public constructor(canvas: HTMLCanvasElement) {
+		super(canvas);
+
+		this.start();
+	}
+
+	protected override init(signal: AbortSignal): Promise<[ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, Processor>]> {
+		this.round = 0;
+
+		const edges = new Map<number, ReadonlySet<number>>();
+		const nodes = new Map<number, Processor>();
+		edges.set(0, new Set<number>([1]));
+		nodes.set(0, new Master(Math.floor(Math.random() * (this.count + 1)), this.count));
+		for (let id = 1; id < this.count; id++) {
+			edges.set(id, new Set<number>([(id + 1) % this.count]));
+			nodes.set(id, new Slave(Math.floor(Math.random() * (this.count + 1))));
+		}
+
+		return Promise.resolve([edges, nodes]);
+	}
+
+	protected override stepIteration(): DijkstrasIteration {
+		return {
+			round: this.round++,
+			isSafe: this.isSafe(),
+		};
+	}
+
+	private isSafe(): boolean {
+		if (this.nodes.size > 0) {
 			let indexCount = 0;
-			let currentIndex = this.processors[0].index;
-			for (const processor of this.processors) {
+			let currentIndex = this.nodes.get(0).index;
+			for (let id = 1; id < this.nodes.size; id++) {
+				const processor = this.nodes.get(id);
 				if (processor.index !== currentIndex) {
 					indexCount++;
 					currentIndex = processor.index;
@@ -30,157 +62,86 @@ export class Dijkstras extends CanvasBased {
 		return true;
 	}
 
-	public onIterationComplete: (isSafe: boolean) => void;
-
-	public constructor(canvas: HTMLCanvasElement) {
-		super(canvas);
-
-		this.delay = s => waitForClick(this.canvas, s);
-
-		this.start();
+	protected override stepNodes(): ReadonlyMap<number, Processor> {
+		const nextNodes = new Map<number, Processor>();
+		nextNodes.set(0, this.nodes.get(0).step(this.nodes.get(this.count - 1).index));
+		for (let id = 1; id < this.count; id++) {
+			nextNodes.set(id, this.nodes.get(id).step(this.nodes.get(id - 1).index));
+		}
+		return nextNodes;
 	}
 
-	private start(): void {
-		this.abortController = new AbortController();
-		this.program(this.abortController.signal);
-	}
-	private stop(): void {
-		this.abortController?.abort();
-	}
-	public restart(): void {
-		this.stop();
-		this.start();
+	protected override makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal): Promise<Map<number, Vec>> {
+		const layout = new Map<number, Vec>();
+
+		const radius = Math.min(this.canvas.width, this.canvas.height) * Dijkstras.CircleRadius;
+		for (let id = 0; id < this.count; id++) {
+			const angle = Math.PI * 2 * (id / this.count) - Math.PI / 2;
+			const pos = { x: radius * Math.cos(angle), y: radius * Math.sin(angle) };
+			layout.set(id, pos);
+		}
+
+		return Promise.resolve(layout);
 	}
 
-	private async program(signal: AbortSignal): Promise<void> {
-		this.processors = this.createProcessors(this.count);
-		await this.allDrawProcessors(this.processors, this.drawTime, signal);
-
-		while (!signal.aborted) {
-			await this.delay(signal);
-			if (!signal.aborted) {
-				this.stepProcessors(this.processors);
-				await this.allDrawProcessors(this.processors, this.drawTime, signal);
-				if (!signal.aborted) {
-					this.onIterationComplete?.(this.isSafe);
-				}
-			}
+	protected override drawNodes(previousNodes: ReadonlyMap<number, Processor>, updatedNodeIds: ReadonlySet<number>): void {
+		for (const id of this.nodes.keys()) {
+			const node = (updatedNodeIds.has(id) ? this.nodes : previousNodes).get(id);
+			const pos = this.layout.node(id);
+			this.drawNode(pos, randomColor(node.index, this.count + 1));
+			this.drawNodeLabel(pos, node.index.toString());
 		}
 	}
 
-	private createProcessors(count: number): Array<Processor> {
-		const list = new Array<Processor>();
-		list.push(new Master(randomIndex(count + 1), count));
-		for (let i = 1; i < count; i++) {
-			list.push(new Slave(randomIndex(count + 1)));
-		}
-		return list;
-	}
-	private stepProcessors(processors: ReadonlyArray<Processor>): void {
-		for (const processor of processors) {
-			processor.prepareStep();
-		}
-		processors[0].step(processors[processors.length - 1].previousIndex);
-		for (let i = 1; i < processors.length; i++) {
-			processors[i].step(processors[i - 1].previousIndex);
-		}
-	}
-
-	private async allDrawProcessors(processors: ReadonlyArray<Processor>, time: number, signal?: AbortSignal): Promise<void> {
-		for (let i = 0; i < processors.length; i++) {
-			if (processors[i].index !== processors[i].previousIndex) {
-				this.drawProcessors(processors, i + 1);
-				await sleep(time / processors.length, signal);
-				if (signal.aborted) {
-					return;
-				}
-			}
-		}
-	}
-	protected reDraw(): void {
-		if (this.processors != null) {
-			this.drawProcessors(this.processors, this.processors.length);
-		}
-	}
-	private drawProcessors(processors: ReadonlyArray<Processor>, count: number): void {
-		const center = [this.canvas.width / 2, this.canvas.height / 2];
-		const radius = Math.min(this.canvas.width, this.canvas.height) * this.circleRadius;
-		this.clear();
-		for (let i = 0; i < processors.length; i++) {
-			const angle = Math.PI * 2 * (i / processors.length) - Math.PI / 2;
-			const pos: [number, number] = [center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle)];
-			if (i < count) {
-				this.drawProcessor(pos, processors[i].index, processors.length + 1);
-			}
-			else if (processors[i].previousIndex != null) {
-				this.drawProcessor(pos, processors[i].previousIndex, processors.length + 1);
-			}
-		}
-	}
-	protected clear() {
+	protected override clear(): void {
 		super.clear();
 
-		const center = [this.canvas.width / 2, this.canvas.height / 2];
-		const radius = Math.min(this.canvas.width, this.canvas.height) * this.circleRadius;
+		const pos = this.layout.node(0);
+		const offset = this.layout.offset({ x: this.canvas.width, y: this.canvas.height });
+
 		this.ctx.textAlign = "center";
 		this.ctx.textBaseline = "bottom";
-		this.ctx.font = `${this.processorRadius * 2}px sans-serif`;
-		this.ctx.fillText("👑", center[0], center[1] - radius - this.processorRadius);
-	}
-	private drawProcessor(pos: [number, number], index: number, processorCount: number): void {
-		const radius = this.processorRadius;
-		this.ctx.beginPath();
-		this.ctx.fillStyle = randomColor(index, processorCount);
-		this.ctx.ellipse(pos[0], pos[1], radius, radius, 0, 0, Math.PI * 2);
-		this.ctx.fill();
-		this.ctx.closePath();
-
-		this.ctx.textAlign = "center";
-		this.ctx.textBaseline = "middle";
-		this.ctx.font = `${this.processorRadius * 0.75}px monospace`;
-		this.ctx.fillStyle = "#ffffff";
-		this.ctx.fillText(index.toString(), pos[0], pos[1]);
-	}
-
-	public dispose(): void {
-		super.dispose();
-		this.stop();
+		this.ctx.font = `${this.nodeRadius * 2}px sans-serif`;
+		this.ctx.fillStyle = themeColor("--color");
+		this.ctx.fillText("👑", offset.x + pos.x, offset.y + pos.y - this.nodeRadius);
 	}
 }
 
-export abstract class Processor {
-	private _previousIndex: number;
-	public get previousIndex(): number {
-		return this._previousIndex;
-	}
+abstract class Processor implements IEquatable<Processor> {
+	public constructor(public readonly index: number) { }
 
-	public get index(): number {
-		return this._index;
-	}
+	public abstract step(previousIndex: number): Processor;
 
-	public constructor(protected _index: number) { }
-
-	public prepareStep(): void {
-		this._previousIndex = this._index;
-	}
-
-	public abstract step(previousIndex: number): void;
+	public abstract equals(other: Processor): boolean;
 }
 
-export class Master extends Processor {
-	public constructor(_index: number, private readonly peers: number) {
-		super(_index);
+class Master extends Processor {
+	public constructor(index: number, private readonly peerCount: number) {
+		super(index);
 	}
 
-	public step(previousIndex: number): void {
-		while (previousIndex === this._index) {
-			this._index = (this._index + 1) % (this.peers + 1);
+	public override step(previousIndex: number): Processor {
+		let index = this.index;
+		while (previousIndex === index) {
+			index = (index + 1) % (this.peerCount + 1);
 		}
+		return new Master(index, this.peerCount);
+	}
+
+	public override equals(other: Processor): boolean {
+		return other instanceof Master &&
+			this.index === other.index &&
+			this.peerCount === other.peerCount;
 	}
 }
 
-export class Slave extends Processor {
-	public step(previousIndex: number): void {
-		this._index = previousIndex;
+class Slave extends Processor {
+	public override step(previousIndex: number): Processor {
+		return new Slave(previousIndex);
+	}
+
+	public override equals(other: Processor): boolean {
+		return other instanceof Slave &&
+			this.index === other.index;
 	}
 }

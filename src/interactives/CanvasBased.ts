@@ -8,13 +8,17 @@ export abstract class CanvasBased {
 
 		this.onResize = this.onResize.bind(this);
 		window.addEventListener("resize", this.onResize, true);
-		this.onResize();
+		this.updateSize();
 	}
 
 	private onResize(): void {
+		this.updateSize();
+		this.reDraw();
+	}
+
+	private updateSize(): void {
 		this.canvas.width = this.canvas.offsetWidth;
 		this.canvas.height = this.canvas.offsetHeight;
-		this.reDraw();
 	}
 
 	protected abstract reDraw(): void;

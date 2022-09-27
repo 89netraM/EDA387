@@ -1,6 +1,6 @@
 import React, { createRef, ChangeEvent, Component, ReactNode, RefObject } from "react";
 import { sleep, waitForClick } from "../utils/promise";
-import { Dijkstras } from "../interactives/Dijkstras";
+import { Dijkstras, DijkstrasIteration } from "../interactives/Dijkstras";
 
 export interface DijkstrasAlgorithmProperties {
 }
@@ -8,7 +8,7 @@ export interface DijkstrasAlgorithmProperties {
 interface DijkstrasAlgorithmState {
 	autoContinue: boolean;
 	count: string;
-	rounds: number;
+	round: number;
 	isSafe: boolean;
 }
 
@@ -20,8 +20,8 @@ export class DijkstrasAlgorithm extends Component<DijkstrasAlgorithmProperties, 
 		super(props);
 		this.state = {
 			autoContinue: false,
-			count: "8",
-			rounds: 0,
+			count: Dijkstras.DefaultCount.toString(),
+			round: 0,
 			isSafe: false,
 		};
 
@@ -53,19 +53,20 @@ export class DijkstrasAlgorithm extends Component<DijkstrasAlgorithmProperties, 
 		}
 	}
 
-	private onIterationComplete(isSafe: boolean): void {
+	private onIterationComplete({ round, isSafe }: DijkstrasIteration): void {
 		this.setState(s => ({
-			rounds: s.rounds + 1,
+			round,
 			isSafe,
 		}));
 	}
 
 	private restart(): void {
 		this.setState({
-			rounds: 0,
+			round: 0,
 			isSafe: false,
 		});
-		this.dijkstras.restart();
+		this.dijkstras.stop();
+		this.dijkstras.start();
 	}
 
 	public componentDidMount(): void {
@@ -86,7 +87,7 @@ export class DijkstrasAlgorithm extends Component<DijkstrasAlgorithmProperties, 
 						<table>
 							<tr>
 								<th>Rounds:</th>
-								<td className="numeric">{this.state.rounds}</td>
+								<td className="numeric">{this.state.round}</td>
 							</tr>
 							<tr>
 								<th>Status:</th>

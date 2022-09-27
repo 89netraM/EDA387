@@ -1,9 +1,10 @@
 import React, { createRef, Component, ReactNode, RefObject, ChangeEvent } from "react";
 import { sleep, waitForClick } from "../utils/promise";
-import { MaximumMatchingRing, VfValues } from "../interactives/MaximumMatchingRing";
+import { MaximumMatchingRing, MaximumMatchingRingIteration, VfValues } from "../interactives/MaximumMatchingRing";
 import MaximumMatchingRingDescription from "./MaximumMatchingRingDescription.md";
 import { Route, Routes } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { MaximumMatching } from "../interactives/MaximumMatching";
 
 export interface MaximumMatchingRingPageProperties {
 }
@@ -11,7 +12,7 @@ export interface MaximumMatchingRingPageProperties {
 interface MaximumMatchingRingPageState {
 	autoContinue: boolean;
 	count: string;
-	rounds: number;
+	round: number;
 	isSafe: boolean;
 	vfValues?: VfValues;
 }
@@ -24,8 +25,8 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 		super(props);
 		this.state = {
 			autoContinue: false,
-			count: "8",
-			rounds: 0,
+			count: MaximumMatchingRing.DefaultCount.toString(),
+			round: 0,
 			isSafe: false,
 		};
 
@@ -57,9 +58,9 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 		}
 	}
 
-	private onIterationComplete(rounds: number, isSafe: boolean, vfValues: VfValues): void {
+	private onIterationComplete({ round, isSafe, vfValues }: MaximumMatchingRingIteration): void {
 		this.setState(s => ({
-			rounds,
+			round,
 			isSafe,
 			vfValues,
 		}));
@@ -67,11 +68,12 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 
 	private restart(): void {
 		this.setState({
-			rounds: 0,
+			round: 0,
 			isSafe: false,
 			vfValues: { m: 0, s: 0, w: 0, f: 0, c: 0 },
 		});
-		this.maximumMatching.restart();
+		this.maximumMatching.stop();
+		this.maximumMatching.start();
 	}
 
 	public componentDidMount(): void {
@@ -86,7 +88,7 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 		return (
 			<>
 				<div style={{ position: "absolute", right: "1px", bottom: "1px" }}>
-					{this.state.autoContinue || this.maximumMatching?.isSafe ? null : "Tap to continue..."}
+					{this.state.autoContinue || this.state.isSafe ? null : "Tap to continue..."}
 				</div>
 				<canvas ref={this.canvas} />
 				<div className="panel">
@@ -98,7 +100,7 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 						<table>
 							<tr>
 								<th>Rounds:</th>
-								<td className="numeric">{this.state.rounds}</td>
+								<td className="numeric">{this.state.round}</td>
 							</tr>
 							<tr>
 								<th>Status:</th>
@@ -115,23 +117,23 @@ export class MaximumMatchingRingPage extends Component<MaximumMatchingRingPagePr
 						<table>
 							<tr title="The processor points at a neighbor that points back at it">
 								<th>Matched:</th>
-								<td style={{ color: MaximumMatchingRing.MatchedColor }}>■</td>
+								<td style={{ color: MaximumMatching.MatchedColor }}>■</td>
 							</tr>
 							<tr title="The processor points at a neighbor that points at no one">
 								<th>Waiting:</th>
-								<td style={{ color: MaximumMatchingRing.WaitingColor }}>■</td>
+								<td style={{ color: MaximumMatching.WaitingColor }}>■</td>
 							</tr>
 							<tr title="The processor points at no one, but all its neighbors points at someone">
 								<th>Single:</th>
-								<td style={{ color: MaximumMatchingRing.SingleColor }}>■</td>
+								<td style={{ color: MaximumMatching.SingleColor }}>■</td>
 							</tr>
 							<tr title="The processor points at no one, and so does one of its neighbors">
 								<th>Free:</th>
-								<td style={{ color: MaximumMatchingRing.FreeColor }}>■</td>
+								<td style={{ color: MaximumMatching.FreeColor }}>■</td>
 							</tr>
 							<tr title="The processor points at a neighbor that does not point at it">
 								<th>Chaining:</th>
-								<td style={{ color: MaximumMatchingRing.ChainingColor }}>■</td>
+								<td style={{ color: MaximumMatching.ChainingColor }}>■</td>
 							</tr>
 						</table>
 					</p>
