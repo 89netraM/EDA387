@@ -164,9 +164,8 @@ class Processor implements IEquatable<Processor> {
 	}
 
 	protected calculateGroupMemberCount(neighbors: ReadonlyArray<Processor>, α: number): number {
-		if (neighbors.some(n => n.edgeDistance <= this.edgeDistance)) {
-			const children = neighbors.filter(n => n.edgeDistance <= this.edgeDistance);
-
+		const children = neighbors.filter(n => n.edgeDistance < this.edgeDistance);
+		if (children.length > 0) {
 			const allChildrenGroupMemberCount = children.reduce((c, n) => c + n.groupMemberCount, 0) + 1;
 			if (allChildrenGroupMemberCount <= α) {
 				for (const child of children) {
@@ -187,10 +186,16 @@ class Processor implements IEquatable<Processor> {
 				}
 				return children[smallestGroupChildIndex].groupMemberCount + 1;
 			}
-			
+
 			for (const child of children) {
 				child.connectedToParent = false;
 			}
+		}
+
+		const peers = neighbors.filter(n => n.edgeDistance === this.edgeDistance && n.groupMemberCount + this.groupMemberCount <= α);
+		if (peers.length === 1) {
+			peers[0].connectedToParent = true;
+			return this.groupMemberCount;
 		}
 
 		return 1;
@@ -202,58 +207,3 @@ class Processor implements IEquatable<Processor> {
 			this.groupMemberCount === other.groupMemberCount;
 	}
 }
-
-// abstract class Processor implements IEquatable<Processor> {
-// 	public constructor(
-// 		public readonly group: number,
-// 		public readonly rootDistance: number = 0,
-// 		public readonly groupMemberCount: number = 0,
-// 	) { }
-
-// 	public abstract step(neighbors: ReadonlyArray<Processor>, α: number): Processor;
-
-// 	protected calculateGroupMemberCount(neighbors: ReadonlyArray<Processor>, α: number): number {
-// 		if (neighbors.some(n => n.rootDistance > this.rootDistance)) {
-// 			const children = neighbors.filter(n => n.rootDistance > this.rootDistance);
-// 			let childSumGroupMemberCount = children.reduce((c, n) => c + n.groupMemberCount, 0) + 1;
-// 			if (childSumGroupMemberCount > α) {
-// 				childSumGroupMemberCount = children.reduce((c, n) => Math.min(n.groupMemberCount, c), Number.POSITIVE_INFINITY) + 1;
-// 			}
-
-// 			if (childSumGroupMemberCount > α) {
-// 				return 1;
-// 			}
-// 			else {
-// 				return childSumGroupMemberCount;
-// 			}
-// 		}
-// 		else {
-// 			return 1;
-// 		}
-// 	}
-
-// 	public equals(other: Processor): boolean {
-// 		return this.group === other.group &&
-// 			this.rootDistance === other.rootDistance &&
-// 			this.groupMemberCount === other.groupMemberCount;
-// 	}
-// }
-
-// class Root extends Processor {
-// 	public override step(neighbors: ReadonlyArray<Processor>, α: number): Processor {
-// 		return new Root(this.group, 0, this.calculateGroupMemberCount(neighbors, α));
-// 	}
-// }
-
-// class Regular extends Processor {
-// 	public override step(neighbors: ReadonlyArray<Processor>, α: number): Processor {
-// 		return new Regular(
-// 			this.group,
-// 			this.calculateRootDistance(neighbors),
-// 			this.calculateGroupMemberCount(neighbors, α));
-// 	}
-
-// 	private calculateRootDistance(neighbors: ReadonlyArray<Processor>): number {
-// 		return neighbors.reduce((c, n) => Math.min(c, n.rootDistance), Number.POSITIVE_INFINITY) + 1;
-// 	}
-// }
