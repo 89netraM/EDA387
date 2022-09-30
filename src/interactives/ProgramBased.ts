@@ -1,4 +1,5 @@
 import { sleep, waitForClick } from "../utils/promise";
+import { Vec } from "../utils/Vec";
 import { GraphBased } from "./GraphBased";
 
 export abstract class ProgramBased<TNode extends IEquatable<TNode>, TIteration> extends GraphBased {
@@ -83,7 +84,7 @@ export abstract class ProgramBased<TNode extends IEquatable<TNode>, TIteration> 
 	protected drawNodesAndEdges(previousNodes: ReadonlyMap<number, TNode>, updatedNodeIds: ReadonlySet<number>): void {
 		this.clear();
 
-		const offset = this.layout.offset({ x: this.canvas.width, y: this.canvas.height });
+		const offset = this.layout.offset(new Vec(this.canvas.width, this.canvas.height));
 		this.ctx.save();
 		this.ctx.translate(offset.x, offset.y);
 

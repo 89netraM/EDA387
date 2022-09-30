@@ -1,11 +1,13 @@
+import { Vec } from "../utils/Vec";
 import { opacity, themeColor } from "../utils/colors";
 import { CanvasBased } from "./CanvasBased";
 
 export abstract class GraphBased extends CanvasBased {
 	protected nodeRadius: number = 25;
+	protected labelSize: number = 0.75;
 	protected normalDistance: number = 0.2;
 	protected arrowLength: number = 15;
-	protected arrowWidth: number = 1.5;
+	protected arrowWidth: number = 10;
 
 	protected layout: Layout;
 
@@ -24,19 +26,14 @@ export abstract class GraphBased extends CanvasBased {
 		return {
 			node: id => map.get(id),
 			offset: canvasSize => {
-				let min = { x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY };
-				let max = { x: Number.NEGATIVE_INFINITY, y: Number.NEGATIVE_INFINITY };
-				for (const { x, y } of map.values()) {
-					min.x = Math.min(min.x, x);
-					min.y = Math.min(min.y, y);
-					max.x = Math.max(max.x, x);
-					max.y = Math.max(max.y, y);
+				let min = new Vec(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+				let max = new Vec(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+				for (const pos of map.values()) {
+					min = min.withMinParts(pos);
+					max = max.withMaxParts(pos);
 				}
-				const size = { width: max.x - min.x, height: max.y - min.y };
-				return {
-					x: (canvasSize.x - size.width) / 2 - min.x,
-					y: (canvasSize.y - size.height) / 2 - min.y,
-				};
+				const size = max.sub(min);
+				return canvasSize.sub(size).scale(0.5).sub(min);
 			},
 		}
 	}
@@ -60,11 +57,11 @@ export abstract class GraphBased extends CanvasBased {
 		this.ctx.lineJoin = "round";
 		this.ctx.setLineDash([]);
 
-		const diff = { x: to.x - from.x, y: to.y - from.y };
-		const distance = Math.sqrt(Math.pow(diff.x, 2) + Math.pow(diff.y, 2));
-		const normal = { x: diff.y * this.normalDistance, y: -diff.x * this.normalDistance };
-		const halfWay = { x: diff.x / 2 + from.x, y: diff.y / 2 + from.y };
-		const midPoint = { x: halfWay.x + normal.x, y: halfWay.y + normal.y };
+		const diff = to.sub(from);
+		const distance = diff.length;
+		const normal = new Vec(diff.y * this.normalDistance, -diff.x * this.normalDistance);
+		const halfWay = diff.scale(0.5).add(from);
+		const midPoint = halfWay.add(normal);
 
 		const fromEdge = pullBack(midPoint, from, this.nodeRadius);
 		const toEdge = pullBack(midPoint, to, this.nodeRadius);
@@ -75,25 +72,20 @@ export abstract class GraphBased extends CanvasBased {
 		this.ctx.lineTo(toEdge.x, toEdge.y);
 		this.ctx.stroke();
 
-		const rightArrowPoint = withLength({ x: midPoint.x - normal.x * this.arrowWidth - toEdge.x, y: midPoint.y - normal.y * this.arrowWidth - toEdge.y }, this.arrowLength);
-		const leftArrowPoint = withLength({ x: midPoint.x + normal.x * this.arrowWidth - toEdge.x, y: midPoint.y + normal.y * this.arrowWidth - toEdge.y }, this.arrowLength);
+		const midPointDiff = toEdge.sub(midPoint);
+		const arrowNormal = new Vec(midPointDiff.y, -midPointDiff.x).withLength(this.arrowWidth);
+		const rightArrowPoint = toEdge.sub(arrowNormal).sub(midPointDiff.withLength(this.arrowLength));
+		const leftArrowPoint = toEdge.add(arrowNormal).sub(midPointDiff.withLength(this.arrowLength));
 		this.ctx.beginPath();
-		this.ctx.moveTo(rightArrowPoint.x + toEdge.x, rightArrowPoint.y + toEdge.y);
+		this.ctx.moveTo(rightArrowPoint.x, rightArrowPoint.y);
 		this.ctx.lineTo(toEdge.x, toEdge.y);
-		this.ctx.lineTo(leftArrowPoint.x + toEdge.x, leftArrowPoint.y + toEdge.y);
+		this.ctx.lineTo(leftArrowPoint.x, leftArrowPoint.y);
 		this.ctx.closePath();
 		this.ctx.fill();
 
 		function pullBack(from: Vec, to: Vec, backOff: number): Vec {
-			const diff = { x: to.x - from.x, y: to.y - from.y };
-			const distance = Math.sqrt(Math.pow(diff.x, 2) + Math.pow(diff.y, 2));
-			const targetDiff = withLength(diff, distance - backOff);
-			return { x: from.x + targetDiff.x, y: from.y + targetDiff.y };
-		}
-
-		function withLength(vec: Vec, length: number): Vec {
-			const l = Math.sqrt(Math.pow(vec.x, 2) + Math.pow(vec.y, 2));
-			return { x: vec.x / l * length, y: vec.y / l * length };
+			const diff = to.sub(from);
+			return from.add(diff.withLength(diff.length - backOff));
 		}
 	}
 
@@ -107,15 +99,10 @@ export abstract class GraphBased extends CanvasBased {
 	protected drawNodeLabel(pos: Vec, label: string): void {
 		this.ctx.textAlign = "center";
 		this.ctx.textBaseline = "middle";
-		this.ctx.font = `${this.nodeRadius * 0.75}px monospace`;
+		this.ctx.font = `${this.nodeRadius * this.labelSize}px monospace`;
 		this.ctx.fillStyle = themeColor("--color");
 		this.ctx.fillText(label, pos.x, pos.y);
 	}
-}
-
-export interface Vec {
-	x: number;
-	y: number;
 }
 
 export interface Layout {

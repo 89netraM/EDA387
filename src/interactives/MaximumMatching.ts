@@ -1,6 +1,6 @@
 import { ProgramBased } from "./ProgramBased";
 import { layout } from "../utils/graphLayout";
-import { Vec } from "./GraphBased";
+import { Vec } from "../utils/Vec";
 
 export interface MaximumMatchingIteration {
 	isSafe: boolean;
@@ -28,6 +28,12 @@ export class MaximumMatching extends ProgramBased<Processor, MaximumMatchingIter
 	public constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 
+		this.start();
+	}
+
+	public restart(): void {
+		this.stop();
+		this.clear();
 		this.start();
 	}
 
@@ -110,11 +116,7 @@ export class MaximumMatching extends ProgramBased<Processor, MaximumMatchingIter
 
 	protected override async makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal): Promise<Map<number, Vec>> {
 		const layoutMap = await layout(new Set<number>(edges.keys()), edges, signal, p => this.onProgress?.(p));
-		for (const [_, pos] of layoutMap) {
-			pos.x *= this.nodeRadius * 2 + MaximumMatching.EdgeLength;
-			pos.y *= this.nodeRadius * 2 + MaximumMatching.EdgeLength;
-		}
-		return layoutMap;
+		return new Map<number, Vec>([...layoutMap].map(([id, pos]) => [id, pos.scale(this.nodeRadius * 2 + MaximumMatching.EdgeLength)]));
 	}
 
 	protected override drawNodes(previousNodes: ReadonlyMap<number, Processor>, updatedNodeIds: ReadonlySet<number>): void {

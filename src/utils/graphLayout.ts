@@ -1,16 +1,17 @@
 import { permutations } from "./math";
 import { immediate } from "./promise";
+import { Vec } from "./Vec";
 
 const yieldSteps = 2500;
 
-export async function layout(nodes: ReadonlySet<number>, edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal, progress: (percent: number) => void): Promise<Map<number, Pos>> {
+export async function layout(nodes: ReadonlySet<number>, edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal, progress: (percent: number) => void): Promise<Map<number, Vec>> {
 	const size = Math.ceil(Math.sqrt(nodes.size));
 	const iterations = permutations(size * size, nodes.size);
 	let i = 0;
 
 	let fittest = Number.POSITIVE_INFINITY;
 	let bestAngleScore = 0;
-	let bestMap: Map<number, Pos>;
+	let bestMap: Map<number, Vec>;
 	for (const map of bfsForLayout(edges, new Array<number>(...nodes), makePositions(size))) {
 		const { lines, nodes, angleScore } = countCrosses(edges, map);
 		const fitness = lines + nodes * 100;
@@ -34,19 +35,19 @@ export async function layout(nodes: ReadonlySet<number>, edges: ReadonlyMap<numb
 	return bestMap;
 }
 
-function makePositions(size: number): Array<ROPos> {
-	const positions = new Array<ROPos>();
+function makePositions(size: number): Array<Vec> {
+	const positions = new Array<Vec>();
 	for (let y = 0; y < size; y++) {
 		for (let x = 0; x < size; x++) {
-			positions.push({ x, y });
+			positions.push(new Vec(x, y));
 		}
 	}
 	return positions;
 }
 
-function* bfsForLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, nodes: ReadonlyArray<number>, positions: ReadonlyArray<ROPos>): Generator<Map<number, ROPos>> {
+function* bfsForLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, nodes: ReadonlyArray<number>, positions: ReadonlyArray<Vec>): Generator<Map<number, Vec>> {
 	if (nodes.length === 0) {
-		yield new Map<number, ROPos>();
+		yield new Map<number, Vec>();
 	}
 	else {
 		let node: number;
@@ -54,7 +55,7 @@ function* bfsForLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, nodes: R
 		for (const innerMap of bfsForLayout(edges, nodes, positions)) {
 			for (const pos of positions) {
 				if ([...innerMap.values()].every(p => p.x !== pos.x || p.y !== pos.y)) {
-					const map = new Map<number, ROPos>([...innerMap, [node, pos]]);
+					const map = new Map<number, Vec>([...innerMap, [node, pos]]);
 					yield map;
 				}
 			}
@@ -62,7 +63,7 @@ function* bfsForLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, nodes: R
 	}
 }
 
-function countCrosses(edges: ReadonlyMap<number, ReadonlySet<number>>, map: ReadonlyMap<number, ROPos>): { lines: number, nodes: number, angleScore: number } {
+function countCrosses(edges: ReadonlyMap<number, ReadonlySet<number>>, map: ReadonlyMap<number, Vec>): { lines: number, nodes: number, angleScore: number } {
 	const lines = new Set<string>();
 	const nodes = new Set<string>();
 	let angleScore = 0;
@@ -129,7 +130,7 @@ function countCrosses(edges: ReadonlyMap<number, ReadonlySet<number>>, map: Read
 	}
 }
 
-function lineSegmentIntersection(s1: ROPos, e1: ROPos, s2: ROPos, e2: ROPos): boolean {
+function lineSegmentIntersection(s1: Vec, e1: Vec, s2: Vec, e2: Vec): boolean {
 	if (isOnLine(s1, e1, s2) || isOnLine(s1, e1, e2) ||
 		isOnLine(s2, e2, s1) || isOnLine(s2, e2, e1)) {
 		return false;
@@ -142,7 +143,7 @@ function lineSegmentIntersection(s1: ROPos, e1: ROPos, s2: ROPos, e2: ROPos): bo
 
 	return (o1 !== o2 && o3 !== o4);
 }
-function orientation(s: ROPos, e: ROPos, p: ROPos): Orientation {
+function orientation(s: Vec, e: Vec, p: Vec): Orientation {
 	const delta = (e.y - s.y) * (p.x - e.x) - (e.x - s.x) * (p.y - e.y);
 	if (delta === 0) {
 		return Orientation.Collinear;
@@ -154,43 +155,28 @@ function orientation(s: ROPos, e: ROPos, p: ROPos): Orientation {
 		return Orientation.CounterClockwise;
 	}
 }
-function isOnSegment(s: ROPos, e: ROPos, p: ROPos): boolean {
+function isOnSegment(s: Vec, e: Vec, p: Vec): boolean {
 	if (isOnLine(s, e, p)) {
-		const length = Math.sqrt(Math.pow(e.x - s.x, 2) + Math.pow(e.y - s.y, 2));
-		const sDist = Math.sqrt(Math.pow(p.x - s.x, 2) + Math.pow(p.y - s.y, 2));
-		const eDist = Math.sqrt(Math.pow(e.x - p.x, 2) + Math.pow(e.y - p.y, 2));
+		const length = e.sub(s).length;
+		const sDist = p.sub(s).length;
+		const eDist = e.sub(p).length;
 		return sDist < length && eDist < length;
 	}
 	else {
 		return false;
 	}
 }
-function isOnLine(s: ROPos, e: ROPos, p: ROPos): boolean {
+function isOnLine(s: Vec, e: Vec, p: Vec): boolean {
 	const dotProduct = (s.x - p.x) * (e.y - p.y) - (s.y - p.y) * (e.x - p.x)
 	const epsilon = 0.003 * (Math.pow(e.x - s.x, 2) + Math.pow(e.y - s.y, 2));
 	return Math.abs(dotProduct) < epsilon;
 }
 
-function angleBetween(from: ROPos, a: ROPos, b: ROPos): number {
-	const aVec = { x: a.x - from.x, y: a.y - from.y };
-	const bVec = { x: b.x - from.x, y: b.y - from.y };
-	const ang = Math.abs(angle(aVec) - angle(bVec));
-	return Math.min(ang, Math.PI * 2 - ang);
+function angleBetween(from: Vec, a: Vec, b: Vec): number {
+	const aVec = a.sub(from);
+	const bVec = b.sub(from);
+	return aVec.angleTo(bVec);
 }
-function angle(vec: ROPos): number {
-	return Math.atan2(vec.x, vec.y);
-}
-
-window["isOnSegment"] = isOnSegment;
-window["zz"] = { x: 0, y: 0 };
-window["zo"] = { x: 0, y: 1 };
-window["zt"] = { x: 0, y: 2 };
-
-export interface Pos {
-	x: number;
-	y: number;
-}
-type ROPos = Readonly<Pos>;
 
 enum Orientation {
 	Collinear,

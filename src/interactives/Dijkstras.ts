@@ -1,5 +1,5 @@
 import { IEquatable, ProgramBased } from "./ProgramBased";
-import { Vec } from "./GraphBased";
+import { Vec } from "../utils/Vec";
 import { randomColor, themeColor } from "../utils/colors";
 
 export interface DijkstrasIteration {
@@ -75,9 +75,10 @@ export class Dijkstras extends ProgramBased<Processor, DijkstrasIteration> {
 		const layout = new Map<number, Vec>();
 
 		const radius = Math.min(this.canvas.width, this.canvas.height) * Dijkstras.CircleRadius;
+		const radiusVec = new Vec(radius, radius);
 		for (let id = 0; id < this.count; id++) {
 			const angle = Math.PI * 2 * (id / this.count) - Math.PI / 2;
-			const pos = { x: radius * Math.cos(angle), y: radius * Math.sin(angle) };
+			const pos = radiusVec.rotate(angle);
 			layout.set(id, pos);
 		}
 
@@ -97,7 +98,7 @@ export class Dijkstras extends ProgramBased<Processor, DijkstrasIteration> {
 		super.clear();
 
 		const pos = this.layout.node(0);
-		const offset = this.layout.offset({ x: this.canvas.width, y: this.canvas.height });
+		const offset = this.layout.offset(new Vec(this.canvas.width, this.canvas.height));
 
 		this.ctx.textAlign = "center";
 		this.ctx.textBaseline = "bottom";

@@ -85,8 +85,7 @@ export class MaximumMatchingPage extends Component<MaximumMatchingPageProperties
 			isSafe: false,
 			loading: 0,
 		});
-		this.maximumMatching.stop();
-		this.maximumMatching.start();
+		this.maximumMatching.restart();
 	}
 
 	public componentDidMount(): void {
