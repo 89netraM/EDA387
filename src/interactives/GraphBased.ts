@@ -3,6 +3,11 @@ import { opacity, themeColor } from "../utils/colors";
 import { CanvasBased } from "./CanvasBased";
 
 export abstract class GraphBased extends CanvasBased {
+	protected static pullBack(from: Vec, to: Vec, backOff: number): Vec {
+		const diff = to.sub(from);
+		return from.add(diff.withLength(diff.length - backOff));
+	}
+
 	protected nodeRadius: number = 25;
 	protected labelSize: number = 0.75;
 	protected normalDistance: number = 0.2;
@@ -45,9 +50,12 @@ export abstract class GraphBased extends CanvasBased {
 		this.ctx.lineJoin = "round";
 		this.ctx.setLineDash([10, 10]);
 
+		const fromEdge = GraphBased.pullBack(to, from, this.nodeRadius);
+		const toEdge = GraphBased.pullBack(from, to, this.nodeRadius);
+
 		this.ctx.beginPath();
-		this.ctx.moveTo(from.x, from.y);
-		this.ctx.lineTo(to.x, to.y);
+		this.ctx.moveTo(fromEdge.x, fromEdge.y);
+		this.ctx.lineTo(toEdge.x, toEdge.y);
 		this.ctx.stroke();
 	}
 
@@ -63,8 +71,8 @@ export abstract class GraphBased extends CanvasBased {
 		const halfWay = diff.scale(0.5).add(from);
 		const midPoint = halfWay.add(normal);
 
-		const fromEdge = pullBack(midPoint, from, this.nodeRadius);
-		const toEdge = pullBack(midPoint, to, this.nodeRadius);
+		const fromEdge = GraphBased.pullBack(midPoint, from, this.nodeRadius);
+		const toEdge = GraphBased.pullBack(midPoint, to, this.nodeRadius);
 
 		this.ctx.beginPath();
 		this.ctx.moveTo(fromEdge.x, fromEdge.y);
@@ -82,11 +90,6 @@ export abstract class GraphBased extends CanvasBased {
 		this.ctx.lineTo(leftArrowPoint.x, leftArrowPoint.y);
 		this.ctx.closePath();
 		this.ctx.fill();
-
-		function pullBack(from: Vec, to: Vec, backOff: number): Vec {
-			const diff = to.sub(from);
-			return from.add(diff.withLength(diff.length - backOff));
-		}
 	}
 
 	protected drawNode(pos: Vec, color: string): void {
