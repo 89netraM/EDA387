@@ -15,6 +15,7 @@ export class LeaderElection extends ProgramBased<Processor, LeaderElectionIterat
 	private static EdgeLength: number = 100;
 
 	protected override nodeRadius: number = 35;
+	protected override normalDistance: number = 0;
 	protected override labelSize: number = 0.55;
 
 	public count: number = LeaderElection.DefaultCount;
