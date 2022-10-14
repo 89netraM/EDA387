@@ -2,9 +2,12 @@ main {
 	position: relative;
 
 	canvas {
-		position: absolute;
-		width: 100%;
-		height: 100%;
+		position: fixed;
+		width: calc(100vw - $navSize);
+		height: calc(100vh - $headerSize);
+
+		// top: $headerSize;
+		// left: $navSize;
 	}
 
 	.panel {

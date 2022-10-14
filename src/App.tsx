@@ -8,6 +8,7 @@ import MaximumMatchingRingDescription from "./pages/MaximumMatchingRingDescripti
 import { LeaderElectionPage } from "./pages/LeaderElectionPage";
 import { CenterFindingPage } from "./pages/CenterFinding";
 import { APartitioningPage } from "./pages/APartitioningPage";
+import { MSTPage } from "./pages/MSTPage";
 import NotFound from "./pages/NotFound.md";
 import README from "../README.md";
 
@@ -19,6 +20,7 @@ export const PAGES = [
 	["Leader Election", "/leader-election"],
 	["Center Finding", "/center-finding"],
 	["α-partitioning", "/a-partitioning"],
+	["MST", "/mst"],
 ] as const;
 
 export function App(): JSX.Element {
@@ -35,6 +37,7 @@ export function App(): JSX.Element {
 					<Route path="leader-election" element={<LeaderElectionPage />} />
 					<Route path="center-finding" element={<CenterFindingPage />} />
 					<Route path="a-partitioning" element={<APartitioningPage />} />
+					<Route path="mst" element={<MSTPage />} />
 					<Route path="*" element={<section><NotFound /></section>} />
 				</Route>
 			</Routes>

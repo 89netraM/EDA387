@@ -183,3 +183,31 @@ enum Orientation {
 	Clockwise,
 	CounterClockwise,
 }
+
+// import forceAtlas2 from "graphology-layout-forceatlas2";
+// import Graph from "graphology";
+// import TGraph from "graphology-types";
+// import { Vec } from "./Vec";
+
+// export async function layout(nodes: ReadonlySet<number>, edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal, progress: (p: number) => void): Promise<Map<number, Vec>> {
+// 	const graph: TGraph = new Graph();
+// 	for (const node of nodes) {
+// 		graph.addNode(node.toFixed(0));
+// 	}
+// 	for (const [from, tos] of edges) {
+// 		for (const to of tos) {
+// 			if (from < to) {
+// 				graph.addEdge(from.toFixed(0), to.toFixed(0));
+// 			}
+// 		}
+// 	}
+// 	const layout = forceAtlas2(graph, 50);
+// 	const map = new Map<number, Vec>();
+// 	for (const node in layout) {
+// 		const pos = layout[node];
+// 		map.set(Number.parseInt(node), new Vec(pos.x, pos.y));
+// 	}
+// 	progress?.(1);
+// 	console.log(map);
+// 	return map;
+// }
