@@ -11,6 +11,7 @@ export abstract class GraphBased extends CanvasBased {
 	protected nodeRadius: number = 25;
 	protected labelSize: number = 0.75;
 	protected edgeLabelSize: number = 0.75;
+	protected edgeLabelNearDistance: number = 25;
 	protected normalDistance: number = 0.2;
 	protected arrowLength: number = 15;
 	protected arrowWidth: number = 10;
@@ -106,6 +107,16 @@ export abstract class GraphBased extends CanvasBased {
 
 	protected drawEdgeLabel(from: Vec, to: Vec, label: string): void {
 		const center = to.sub(from).scale(0.5).add(from);
+		this.ctx.textAlign = "center";
+		this.ctx.textBaseline = "middle";
+		this.ctx.font = `${this.nodeRadius * this.edgeLabelSize}px monospace`;
+		this.ctx.fillStyle = themeColor("--color");
+		this.ctx.fillText(label, center.x, center.y);
+	}
+
+	protected drawEdgeLabelNear(from: Vec, to: Vec, label: string): void {
+		const diff = to.sub(from);
+		const center = diff.scale((this.edgeLabelNearDistance + this.nodeRadius) / diff.length).add(from);
 		this.ctx.textAlign = "center";
 		this.ctx.textBaseline = "middle";
 		this.ctx.font = `${this.nodeRadius * this.edgeLabelSize}px monospace`;
