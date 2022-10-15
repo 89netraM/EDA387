@@ -16,6 +16,7 @@ export class SpanningTree extends ProgramBased<Processor, SpanningTreeIteration>
 
 	protected override nodeRadius: number = 35;
 	protected override labelSize: number = 0.55;
+	protected override normalDistance: number = 0;
 
 	public count: number = SpanningTree.DefaultCount;
 
