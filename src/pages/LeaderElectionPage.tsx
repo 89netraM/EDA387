@@ -11,7 +11,6 @@ interface LeaderElectionPageState {
 	count: number;
 	round: number;
 	isSafe: boolean;
-	loading: number | null;
 }
 
 export class LeaderElectionPage extends Component<LeaderElectionPageProperties, LeaderElectionPageState> {
@@ -25,13 +24,11 @@ export class LeaderElectionPage extends Component<LeaderElectionPageProperties, 
 			count: LeaderElection.DefaultCount,
 			round: 0,
 			isSafe: false,
-			loading: 0,
 		};
 
 		this.setAutoContinue = this.setAutoContinue.bind(this);
 		this.setCount = this.setCount.bind(this);
 		this.onIterationComplete = this.onIterationComplete.bind(this);
-		this.onProgress = this.onProgress.bind(this);
 		this.clear = this.clear.bind(this);
 		this.restart = this.restart.bind(this);
 	}
@@ -67,13 +64,6 @@ export class LeaderElectionPage extends Component<LeaderElectionPageProperties, 
 		this.setState({
 			round,
 			isSafe,
-			loading: null,
-		});
-	}
-
-	private onProgress(percent: number): void {
-		this.setState({
-			loading: percent,
 		});
 	}
 
@@ -81,7 +71,6 @@ export class LeaderElectionPage extends Component<LeaderElectionPageProperties, 
 		this.setState({
 			round: 0,
 			isSafe: false,
-			loading: 0,
 		});
 		this.leaderElection.restart();
 	}
@@ -89,22 +78,14 @@ export class LeaderElectionPage extends Component<LeaderElectionPageProperties, 
 	public componentDidMount(): void {
 		this.leaderElection = new LeaderElection(this.canvas.current);
 		this.leaderElection.onIterationComplete = this.onIterationComplete;
-		this.leaderElection.onProgress = this.onProgress;
 	}
 
 	public render(): ReactNode {
 		return (
 			<>
 				<div style={{ position: "absolute", right: "1px", bottom: "1px" }}>
-					{this.state.loading != null || this.state.autoContinue || this.state.isSafe ? null : "Tap to continue..."}
+					{this.state.autoContinue || this.state.isSafe ? null : "Tap to continue..."}
 				</div>
-				{this.state.loading != null
-					?
-						<div className="progress">
-							<progress value={this.state.loading}/>
-							<span>{(this.state.loading * 100).toFixed(0)}%</span>
-						</div>
-					: null}
 				<canvas ref={this.canvas} />
 				<div className="panel">
 					<h3>Self-stabilizing Leader Election for ID-based Systems</h3>

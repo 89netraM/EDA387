@@ -11,7 +11,6 @@ interface MSTPageState {
 	count: number;
 	isSafe: boolean;
 	round: number;
-	loading: number | null;
 	hoveredProcessor: Processor | null;
 }
 
@@ -26,14 +25,12 @@ export class MSTPage extends Component<MSTPageProperties, MSTPageState> {
 			count: MST.DefaultCount,
 			isSafe: false,
 			round: 0,
-			loading: 0,
 			hoveredProcessor: null,
 		};
 
 		this.setAutoContinue = this.setAutoContinue.bind(this);
 		this.setCount = this.setCount.bind(this);
 		this.onIterationComplete = this.onIterationComplete.bind(this);
-		this.onProgress = this.onProgress.bind(this);
 		this.onProcessorHover = this.onProcessorHover.bind(this);
 		this.clear = this.clear.bind(this);
 		this.restart = this.restart.bind(this);
@@ -70,13 +67,6 @@ export class MSTPage extends Component<MSTPageProperties, MSTPageState> {
 			isSafe,
 			round,
 			hoveredProcessor: processor,
-			loading: null,
-		});
-	}
-
-	private onProgress(percent: number): void {
-		this.setState({
-			loading: percent,
 		});
 	}
 
@@ -89,7 +79,6 @@ export class MSTPage extends Component<MSTPageProperties, MSTPageState> {
 	private restart(): void {
 		this.setState({
 			round: 0,
-			loading: 0,
 		});
 		this.mst.restart();
 	}
@@ -97,7 +86,6 @@ export class MSTPage extends Component<MSTPageProperties, MSTPageState> {
 	public componentDidMount(): void {
 		this.mst = new MST(this.canvas.current);
 		this.mst.onIterationComplete = this.onIterationComplete;
-		this.mst.onProgress = this.onProgress;
 		this.mst.onProcessorHover = this.onProcessorHover;
 	}
 
@@ -105,15 +93,8 @@ export class MSTPage extends Component<MSTPageProperties, MSTPageState> {
 		return (
 			<>
 				<div style={{ position: "fixed", right: "1px", bottom: "1px" }}>
-					{this.state.loading != null || this.state.autoContinue || this.state.isSafe ? null : "Tap to continue..."}
+					{this.state.autoContinue || this.state.isSafe ? null : "Tap to continue..."}
 				</div>
-				{this.state.loading != null
-					?
-						<div className="progress">
-							<progress value={this.state.loading}/>
-							<span>{(this.state.loading * 100).toFixed(0)}%</span>
-						</div>
-					: null}
 				<canvas
 					ref={this.canvas}
 					style={{ cursor: this.state.hoveredProcessor != null ? "help" : null }}

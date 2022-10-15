@@ -22,7 +22,7 @@ export class Dijkstras extends ProgramBased<Processor, DijkstrasIteration> {
 		this.start();
 	}
 
-	protected override init(signal: AbortSignal): Promise<[ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, Processor>]> {
+	protected override init(): [ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, Processor>] {
 		this.round = 0;
 
 		const edges = new Map<number, ReadonlySet<number>>();
@@ -34,7 +34,7 @@ export class Dijkstras extends ProgramBased<Processor, DijkstrasIteration> {
 			nodes.set(id, new Slave(Math.floor(Math.random() * (this.count + 1))));
 		}
 
-		return Promise.resolve([edges, nodes]);
+		return [edges, nodes];
 	}
 
 	protected override stepIteration(): DijkstrasIteration {
@@ -71,7 +71,7 @@ export class Dijkstras extends ProgramBased<Processor, DijkstrasIteration> {
 		return nextNodes;
 	}
 
-	protected override makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal): Promise<Map<number, Vec>> {
+	protected override makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>): Map<number, Vec> {
 		const layout = new Map<number, Vec>();
 
 		const radius = Math.min(this.canvas.width, this.canvas.height) * Dijkstras.CircleRadius;
@@ -82,7 +82,7 @@ export class Dijkstras extends ProgramBased<Processor, DijkstrasIteration> {
 			layout.set(id, pos);
 		}
 
-		return Promise.resolve(layout);
+		return layout;
 	}
 
 	protected override drawNodes(previousNodes: ReadonlyMap<number, Processor>, updatedNodeIds: ReadonlySet<number>): void {

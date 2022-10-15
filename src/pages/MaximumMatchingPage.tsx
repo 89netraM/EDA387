@@ -10,7 +10,6 @@ interface MaximumMatchingPageState {
 	count: string;
 	round: number;
 	isSafe: boolean;
-	loading: number | null;
 }
 
 export class MaximumMatchingPage extends Component<MaximumMatchingPageProperties, MaximumMatchingPageState> {
@@ -24,13 +23,11 @@ export class MaximumMatchingPage extends Component<MaximumMatchingPageProperties
 			count: MaximumMatching.DefaultCount.toString(),
 			round: 0,
 			isSafe: false,
-			loading: 0,
 		};
 
 		this.setAutoContinue = this.setAutoContinue.bind(this);
 		this.setCount = this.setCount.bind(this);
 		this.onIterationComplete = this.onIterationComplete.bind(this);
-		this.onProgress = this.onProgress.bind(this);
 		this.clear = this.clear.bind(this);
 		this.restart = this.restart.bind(this);
 	}
@@ -61,13 +58,6 @@ export class MaximumMatchingPage extends Component<MaximumMatchingPageProperties
 		this.setState({
 			round,
 			isSafe,
-			loading: null,
-		});
-	}
-
-	private onProgress(percent: number): void {
-		this.setState({
-			loading: percent,
 		});
 	}
 
@@ -83,7 +73,6 @@ export class MaximumMatchingPage extends Component<MaximumMatchingPageProperties
 		this.setState({
 			round: 0,
 			isSafe: false,
-			loading: 0,
 		});
 		this.maximumMatching.restart();
 	}
@@ -91,22 +80,14 @@ export class MaximumMatchingPage extends Component<MaximumMatchingPageProperties
 	public componentDidMount(): void {
 		this.maximumMatching = new MaximumMatching(this.canvas.current);
 		this.maximumMatching.onIterationComplete = this.onIterationComplete;
-		this.maximumMatching.onProgress = this.onProgress;
 	}
 
 	public render(): ReactNode {
 		return (
 			<>
 				<div style={{ position: "absolute", right: "1px", bottom: "1px" }}>
-					{this.state.loading != null || this.state.autoContinue || this.state.isSafe ? null : "Tap to continue..."}
+					{this.state.autoContinue || this.state.isSafe ? null : "Tap to continue..."}
 				</div>
-				{this.state.loading != null
-					?
-						<div className="progress">
-							<progress value={this.state.loading}/>
-							<span>{(this.state.loading * 100).toFixed(0)}%</span>
-						</div>
-					: null}
 				<canvas ref={this.canvas} />
 				<div className="panel">
 					<h3>Self-stabilizing maximum&nbsp;matching on an arbitrary graph</h3>

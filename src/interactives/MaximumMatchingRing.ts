@@ -32,7 +32,7 @@ export class MaximumMatchingRing extends ProgramBased<Processor, MaximumMatching
 		this.start();
 	}
 
-	protected override async init(signal: AbortSignal): Promise<[ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, Processor>]> {
+	protected override init(): [ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, Processor>] {
 		this.round = 0;
 
 		const edges = new Map<number, ReadonlySet<number>>();
@@ -110,7 +110,7 @@ export class MaximumMatchingRing extends ProgramBased<Processor, MaximumMatching
 		return nextNodes;
 	}
 
-	protected override makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal): Promise<Map<number, Vec>> {
+	protected override makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>): Map<number, Vec> {
 		const layout = new Map<number, Vec>();
 
 		const radius = Math.min(this.canvas.width, this.canvas.height) * MaximumMatchingRing.CircleRadius;
@@ -121,7 +121,7 @@ export class MaximumMatchingRing extends ProgramBased<Processor, MaximumMatching
 			layout.set(id, pos);
 		}
 
-		return Promise.resolve(layout);
+		return layout;
 	}
 
 	protected override drawNodes(previousNodes: ReadonlyMap<number, Processor>, updatedNodeIds: ReadonlySet<number>): void {

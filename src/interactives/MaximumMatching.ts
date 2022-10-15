@@ -23,8 +23,6 @@ export class MaximumMatching extends ProgramBased<Processor, MaximumMatchingIter
 
 	private round: number = 0;
 
-	public onProgress: (percent: number) => void;
-
 	public constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 
@@ -50,7 +48,7 @@ export class MaximumMatching extends ProgramBased<Processor, MaximumMatchingIter
 		this.program(this.abortController.signal);
 	}
 
-	protected override async init(signal: AbortSignal): Promise<[ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, Processor>]> {
+	protected override init(): [ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, Processor>] {
 		this.round = 0;
 
 		const edges = new Map<number, Set<number>>();
@@ -114,8 +112,8 @@ export class MaximumMatching extends ProgramBased<Processor, MaximumMatchingIter
 		return map;
 	}
 
-	protected override async makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal): Promise<Map<number, Vec>> {
-		const layoutMap = await layout(new Set<number>(edges.keys()), edges, signal, p => this.onProgress?.(p));
+	protected override makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>): Map<number, Vec> {
+		const layoutMap = layout(new Set<number>(edges.keys()), edges);
 		return new Map<number, Vec>([...layoutMap].map(([id, pos]) => [id, pos.scale(this.nodeRadius * 2 + MaximumMatching.EdgeLength)]));
 	}
 

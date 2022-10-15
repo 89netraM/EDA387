@@ -30,7 +30,7 @@ export class APartitioning extends ProgramBased<Processor, APartitioningIteratio
 		this.start();
 	}
 
-	protected override async init(signal: AbortSignal): Promise<[ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, Processor>]> {
+	protected override init(): [ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, Processor>] {
 		this.round = 0;
 
 		const edges = new Map<number, Set<number>>();
@@ -104,7 +104,7 @@ export class APartitioning extends ProgramBased<Processor, APartitioningIteratio
 		return map;
 	}
 
-	protected override async makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal): Promise<Map<number, Vec>> {
+	protected override makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>): Map<number, Vec> {
 		return new Map<number, Vec>([...treeLayout(edges)].map(([id, pos]) => [id, pos.scale(this.nodeRadius * 2 + APartitioning.EdgeLength)]));
 	}
 

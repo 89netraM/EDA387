@@ -18,23 +18,17 @@ export abstract class ProgramBased<TNode extends IEquatable<TNode>, TIteration> 
 		this.delay = s => waitForClick(this.canvas, s);
 	}
 
-	public async start(): Promise<void> {
+	public start(): void {
 		this.abortController = new AbortController();
 
-		[this.edges, this.nodes] = await this.init(this.abortController.signal);
-		if (this.abortController.signal.aborted) {
-			return;
-		}
+		[this.edges, this.nodes] = this.init();
 
-		this.layout = await this.graphLayout(this.edges, this.abortController.signal);
-		if (this.abortController.signal.aborted) {
-			return;
-		}
+		this.layout = this.graphLayout(this.edges);
 
 		this.program(this.abortController.signal);
 	}
 
-	protected abstract init(signal: AbortSignal): Promise<[ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, TNode>]>;
+	protected abstract init(): [ReadonlyMap<number, ReadonlySet<number>>, ReadonlyMap<number, TNode>];
 
 	public stop(): void {
 		this.abortController.abort();

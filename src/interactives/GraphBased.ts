@@ -23,12 +23,8 @@ export abstract class GraphBased extends CanvasBased {
 		super(canvas);
 	}
 
-	protected async graphLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal): Promise<Layout> {
-		const map = await this.makeLayout(edges, signal);
-		if (signal.aborted) {
-			return null;
-		}
-
+	protected graphLayout(edges: ReadonlyMap<number, ReadonlySet<number>>): Layout {
+		const map = this.makeLayout(edges);
 		return {
 			node: id => map.get(id),
 			offset: canvasSize => {
@@ -41,9 +37,9 @@ export abstract class GraphBased extends CanvasBased {
 				const size = max.sub(min);
 				return canvasSize.sub(size).scale(0.5).sub(min);
 			},
-		}
+		};
 	}
-	protected abstract makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>, signal: AbortSignal): Promise<Map<number, Vec>>;
+	protected abstract makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>): Map<number, Vec>;
 
 	protected drawConnection(from: Vec, to: Vec): void {
 		this.ctx.strokeStyle = opacity(themeColor("--color"), 0.5);
