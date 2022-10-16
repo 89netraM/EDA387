@@ -23,7 +23,8 @@ export abstract class ProgramBased<TNode extends IEquatable<TNode>, TIteration> 
 
 		[this.edges, this.nodes] = this.init();
 
-		this.layout = this.graphLayout(this.edges);
+		const map = this.makeLayout(this.edges)
+		this.layout = this.graphLayout(map);
 
 		this.program(this.abortController.signal);
 	}
@@ -78,9 +79,12 @@ export abstract class ProgramBased<TNode extends IEquatable<TNode>, TIteration> 
 	protected drawNodesAndEdges(previousNodes: ReadonlyMap<number, TNode>, updatedNodeIds: ReadonlySet<number>): void {
 		this.clear();
 
-		const offset = this.layout.offset(new Vec(this.canvas.width, this.canvas.height));
+		const canvasSize = new Vec(this.canvas.width, this.canvas.height);
+		const offset = this.layout.offset(canvasSize);
+		const scale = this.layout.scale(canvasSize);
 		this.ctx.save();
 		this.ctx.translate(offset.x, offset.y);
+		this.ctx.scale(scale, scale);
 
 		const seenConnections = new Set<string>();
 		for (const [a, bs] of this.edges) {

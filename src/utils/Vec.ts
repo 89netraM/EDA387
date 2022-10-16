@@ -31,8 +31,8 @@ export class Vec {
 
 	public rotate(angle: number): Vec {
 		return new Vec(
-			this.x * Math.cos(angle),
-			this.y * Math.sin(angle));
+			this.x * Math.cos(angle) - this.y * Math.sin(angle),
+			this.x * Math.sin(angle) + this.y * Math.cos(angle));
 	}
 
 	public withLength(length: number): Vec {

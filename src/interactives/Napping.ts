@@ -154,8 +154,10 @@ export class Napping extends ProgramBased<Processor, NappingIteration> {
 
 	private hoverProcessor(e: MouseEvent): Processor | null {
 		if (this.nodes != null && this.layout != null) {
-			const offset = this.layout.offset(new Vec(this.canvas.width, this.canvas.height));
-			const mousePos = new Vec(e.offsetX, e.offsetY).sub(offset);
+			const canvasSize = new Vec(this.canvas.width, this.canvas.height);
+			const offset = this.layout.offset(canvasSize);
+			const scale = this.layout.scale(canvasSize);
+			const mousePos = new Vec(e.offsetX, e.offsetY).sub(offset).scale(1 / scale);
 			for (const [id, processor] of this.nodes) {
 				const diff = mousePos.sub(this.layout.node(id));
 				if (diff.length < this.nodeRadius) {

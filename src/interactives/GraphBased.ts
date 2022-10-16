@@ -18,24 +18,38 @@ export abstract class GraphBased extends CanvasBased {
 
 	protected layout: Layout;
 
-	public onProgress?: (percent: number) => void;
-
 	public constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 	}
 
-	protected graphLayout(edges: ReadonlyMap<number, ReadonlySet<number>>): Layout {
-		const map = this.makeLayout(edges);
+	protected graphLayout(map: ReadonlyMap<number, Vec>): Layout {
+		let min = new Vec(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+		let max = new Vec(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+		const margin = new Vec(this.nodeRadius * 2, this.nodeRadius * 2);
+		for (const pos of map.values()) {
+			min = min.withMinParts(pos.sub(margin));
+			max = max.withMaxParts(pos.add(margin));
+		}
+		const size = max.sub(min);
+
 		return {
 			node: id => map.get(id),
-			offset: canvasSize => {
-				let min = new Vec(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
-				let max = new Vec(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
-				for (const pos of map.values()) {
-					min = min.withMinParts(pos);
-					max = max.withMaxParts(pos);
+			scale: canvasSize => {
+				const horizontalOverflow = size.x - canvasSize.x;
+				const verticalOverflow = size.y - canvasSize.y;
+				if (horizontalOverflow > verticalOverflow) {
+					if (horizontalOverflow > 0) {
+						return canvasSize.x / size.x;
+					}
+				} else {
+					if (verticalOverflow > 0) {
+						return canvasSize.y / size.y;
+					}
 				}
-				const size = max.sub(min);
+
+				return 1;
+			},
+			offset: canvasSize => {
 				return canvasSize.sub(size).scale(0.5).sub(min);
 			},
 		};
@@ -114,18 +128,19 @@ export abstract class GraphBased extends CanvasBased {
 		this.ctx.fillText(label, center.x, center.y);
 	}
 
-	protected drawEdgeLabelNear(from: Vec, to: Vec, label: string): void {
+	protected drawEdgeLabelNear(from: Vec, to: Vec, label: string, color?: string): void {
 		const diff = to.sub(from);
 		const center = diff.scale((this.edgeLabelNearDistance + this.nodeRadius) / diff.length).add(from);
 		this.ctx.textAlign = "center";
 		this.ctx.textBaseline = "middle";
 		this.ctx.font = `${this.nodeRadius * this.edgeLabelSize}px monospace`;
-		this.ctx.fillStyle = themeColor("--color");
+		this.ctx.fillStyle = color ?? themeColor("--color");
 		this.ctx.fillText(label, center.x, center.y);
 	}
 }
 
 export interface Layout {
 	node(id: number): Vec;
+	scale(canvasSize: Vec): number;
 	offset(canvasSize: Vec): Vec;
 }

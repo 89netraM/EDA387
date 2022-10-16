@@ -1,4 +1,5 @@
 import { IEquatable, ProgramBased } from "./ProgramBased";
+import { circleLayout } from "../utils/circleLayout";
 import { Vec } from "../utils/Vec";
 import { randomColor, themeColor } from "../utils/colors";
 
@@ -10,7 +11,7 @@ export interface DijkstrasIteration {
 export class Dijkstras extends ProgramBased<Processor, DijkstrasIteration> {
 	public static DefaultCount: number = 8;
 
-	private static CircleRadius: number = 0.25;
+	private static CircleRadius: number = 0.6;
 
 	public count: number = Dijkstras.DefaultCount;
 
@@ -72,17 +73,9 @@ export class Dijkstras extends ProgramBased<Processor, DijkstrasIteration> {
 	}
 
 	protected override makeLayout(edges: ReadonlyMap<number, ReadonlySet<number>>): Map<number, Vec> {
-		const layout = new Map<number, Vec>();
-
-		const radius = Math.min(this.canvas.width, this.canvas.height) * Dijkstras.CircleRadius;
-		const radiusVec = new Vec(radius, radius);
-		for (let id = 0; id < this.count; id++) {
-			const angle = Math.PI * 2 * (id / this.count) - Math.PI / 2;
-			const pos = radiusVec.rotate(angle);
-			layout.set(id, pos);
-		}
-
-		return layout;
+		const radius = Math.min(this.canvas.width, this.canvas.height) / 2 * Dijkstras.CircleRadius;
+		const layoutMap = circleLayout([...edges.keys()]);
+		return new Map<number, Vec>([...layoutMap].map(([id, pos]) => [id, pos.scale(radius)]));
 	}
 
 	protected override drawNodes(previousNodes: ReadonlyMap<number, Processor>, updatedNodeIds: ReadonlySet<number>): void {
@@ -98,13 +91,15 @@ export class Dijkstras extends ProgramBased<Processor, DijkstrasIteration> {
 		super.clear();
 
 		const pos = this.layout.node(0);
-		const offset = this.layout.offset(new Vec(this.canvas.width, this.canvas.height));
+		const canvasSize = new Vec(this.canvas.width, this.canvas.height);
+		const offset = this.layout.offset(canvasSize);
+		const scale = this.layout.scale(canvasSize);
 
 		this.ctx.textAlign = "center";
 		this.ctx.textBaseline = "bottom";
-		this.ctx.font = `${this.nodeRadius * 2}px sans-serif`;
+		this.ctx.font = `${this.nodeRadius * 2 * scale}px sans-serif`;
 		this.ctx.fillStyle = themeColor("--color");
-		this.ctx.fillText("👑", offset.x + pos.x, offset.y + pos.y - this.nodeRadius);
+		this.ctx.fillText("👑", offset.x + pos.x * scale, offset.y + (pos.y - this.nodeRadius) * scale);
 	}
 }
 

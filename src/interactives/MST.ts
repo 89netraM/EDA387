@@ -1,5 +1,6 @@
 import { randomInRange } from "../utils/math";
 import { randomColor } from "../utils/colors";
+import { minimumSpanningTree } from "../utils/graphs";
 import { layout } from "../utils/graphLayout";
 import { Vec } from "../utils/Vec";
 import { IEquatable, ProgramBased } from "./ProgramBased";
@@ -207,8 +208,10 @@ export class MST extends ProgramBased<Processor, MSTIteration> {
 
 	private onMouseMoveCanvas(e: MouseEvent): void {
 		if (this.nodes != null && this.layout != null) {
-			const offset = this.layout.offset(new Vec(this.canvas.width, this.canvas.height));
-			const mousePos = new Vec(e.offsetX, e.offsetY).sub(offset);
+			const canvasSize = new Vec(this.canvas.width, this.canvas.height);
+			const offset = this.layout.offset(canvasSize);
+			const scale = this.layout.scale(canvasSize);
+			const mousePos = new Vec(e.offsetX, e.offsetY).sub(offset).scale(1 / scale);
 			for (const [id, processor] of this.nodes) {
 				const diff = mousePos.sub(this.layout.node(id));
 				if (diff.length < this.nodeRadius) {
@@ -233,7 +236,7 @@ export class MST extends ProgramBased<Processor, MSTIteration> {
 export class Processor implements IEquatable<Processor> {
 	public constructor(
 		public readonly id: number,
-		public readonly graph: ImmutableGraph = new Map<number, Map<number, number>>(),
+		public readonly graph: ReadonlyMap<number, ReadonlyMap<number, number>> = new Map<number, Map<number, number>>(),
 		public readonly mst: ReadonlyMap<number, ReadonlySet<number>> = new Map<number, Set<number>>(),
 		public readonly connections: ReadonlySet<number> = new Set<number>(),
 	) { }
@@ -243,7 +246,7 @@ export class Processor implements IEquatable<Processor> {
 			(g, [n, _]) => insertGraph(g, n.graph),
 			new Map<number, Map<number, number>>([[this.id, connectionsFromNeighbors(neighbors)]]));
 
-		const mst = prims(graph);
+		const mst = minimumSpanningTree(graph);
 
 		return new Processor(
 			this.id,
@@ -259,7 +262,7 @@ export class Processor implements IEquatable<Processor> {
 			return connections;
 		}
 
-		function insertGraph(aggregator: Graph, graph: ImmutableGraph): Graph {
+		function insertGraph(aggregator: Map<number, Map<number, number>>, graph: ReadonlyMap<number, ReadonlyMap<number, number>>): Map<number, Map<number, number>> {
 			for (const [from, tos] of graph) {
 				let connections: Map<number, number>;
 				if (aggregator.has(from)) {
@@ -291,30 +294,4 @@ export class Processor implements IEquatable<Processor> {
 	public reset(): Processor {
 		return new Processor(this.id);
 	}
-}
-
-type Graph = Map<number, Map<number, number>>;
-type ImmutableGraph = ReadonlyMap<number, ReadonlyMap<number, number>>;
-
-function prims(graph: ImmutableGraph): Map<number, Set<number>> {
-	const nodes = new Set<number>([...graph].flatMap(([from, tos]) => [from, ...[...tos].map(([to, _]) => to)]));
-	const visited = new Set<number>([[...graph].reduce((m, [id, _]) => Math.min(m, id), Number.POSITIVE_INFINITY)]);
-	const layout = new Map<number, Set<number>>([...graph].map(([id, _]) => [id, new Set<number>()]));
-	while (visited.size < nodes.size) {
-		let minimum: { from: number, to: number, weight: number } | null = null;
-		for (const [from, tos] of [...graph].sort(([a, ], [b, ]) => a - b)) {
-			if (visited.has(from)) {
-				for (const [to, weight] of [...tos].sort(([a, ], [b, ]) => a - b)) {
-					if (!visited.has(to)) {
-						if (weight < (minimum?.weight ?? Number.POSITIVE_INFINITY)) {
-							minimum = { from, to, weight };
-						}
-					}
-				}
-			}
-		}
-		visited.add(minimum.to);
-		layout.get(minimum.from).add(minimum.to);
-	}
-	return layout;
 }
