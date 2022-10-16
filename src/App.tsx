@@ -11,6 +11,7 @@ import { APartitioningPage } from "./pages/APartitioningPage";
 import { SpanningTreePage } from "./pages/SpanningTreePage";
 import { MSTPage } from "./pages/MSTPage";
 import { ClockSyncMaxPage } from "./pages/ClockSyncMaxPage";
+import { ClockSyncMinPage } from "./pages/ClockSyncMinPage";
 import { NappingPage } from "./pages/NappingPage";
 import NotFound from "./pages/NotFound.md";
 import README from "../README.md";
@@ -26,6 +27,7 @@ export const PAGES = [
 	["Spanning Tree", "/spanning-tree"],
 	["MST", "/spanning-tree/minimum"],
 	["Clock Sync – Max", "/clock-sync/max"],
+	["Clock Sync – Min", "/clock-sync/min"],
 	["Napping", "/napping"],
 ] as const;
 
@@ -46,6 +48,7 @@ export function App(): JSX.Element {
 					<Route path="spanning-tree" element={<SpanningTreePage />} />
 					<Route path="spanning-tree/minimum" element={<MSTPage />} />
 					<Route path="clock-sync/max" element={<ClockSyncMaxPage />} />
+					<Route path="clock-sync/min" element={<ClockSyncMinPage />} />
 					<Route path="napping" element={<NappingPage />} />
 					<Route path="*" element={<section><NotFound /></section>} />
 				</Route>

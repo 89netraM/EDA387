@@ -1,27 +1,29 @@
 import React, { createRef, ChangeEvent, Component, ReactNode, RefObject } from "react";
 import { sleep, waitForClick } from "../utils/promise";
-import { ClockSyncMax, ClockSyncMaxIteration } from "../interactives/ClockSyncMax";
+import { ClockSync, ClockSyncIteration } from "../interactives/ClockSync";
 import { NumericInput } from "../components/NumericInput";
 
-export interface ClockSyncMaxPageProperties {
+export interface ClockSyncPageProperties {
 }
 
-interface ClockSyncMaxPageState {
+interface ClockSyncPageState {
 	autoContinue: boolean;
 	count: number;
 	round: number;
 	isSafe: boolean;
 }
 
-export class ClockSyncMaxPage extends Component<ClockSyncMaxPageProperties, ClockSyncMaxPageState> {
+export abstract class ClockSyncPage extends Component<ClockSyncPageProperties, ClockSyncPageState> {
 	private readonly canvas: RefObject<HTMLCanvasElement> = createRef<HTMLCanvasElement>();
-	private clockSync: ClockSyncMax;
+	private clockSync: ClockSync<any>;
 
-	public constructor(props: ClockSyncMaxPageProperties) {
+	protected abstract title: string;
+
+	public constructor(props: ClockSyncPageProperties) {
 		super(props);
 		this.state = {
 			autoContinue: false,
-			count: ClockSyncMax.DefaultCount,
+			count: ClockSync.DefaultCount,
 			round: 0,
 			isSafe: false,
 		};
@@ -52,7 +54,7 @@ export class ClockSyncMaxPage extends Component<ClockSyncMaxPageProperties, Cloc
 		});
 	}
 
-	private onIterationComplete({ round, isSafe }: ClockSyncMaxIteration): void {
+	private onIterationComplete({ round, isSafe }: ClockSyncIteration): void {
 		this.setState(s => ({
 			round,
 			isSafe,
@@ -76,9 +78,11 @@ export class ClockSyncMaxPage extends Component<ClockSyncMaxPageProperties, Cloc
 	}
 
 	public componentDidMount(): void {
-		this.clockSync = new ClockSyncMax(this.canvas.current);
+		this.clockSync = this.makeClockSync(this.canvas.current);
 		this.clockSync.onIterationComplete = this.onIterationComplete;
 	}
+
+	protected abstract makeClockSync(canvas: HTMLCanvasElement): ClockSync<any>;
 
 	public render(): ReactNode {
 		return (
@@ -88,7 +92,7 @@ export class ClockSyncMaxPage extends Component<ClockSyncMaxPageProperties, Cloc
 				</div>
 				<canvas ref={this.canvas} />
 				<div className="panel">
-					<h3>Digital Clock Synchronization – Max</h3>
+					<h3>Digital Clock Synchronization – {this.title}</h3>
 					<p>
 						<table>
 							<tr>
